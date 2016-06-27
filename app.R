@@ -6,7 +6,8 @@ ui <- fluidPage(title = "Estimating from Graphs",
                   tabPanel(title = "Scatter Plots",
                            actionButton("NewPlot", "Make a New Plot"),
                            plotOutput("scattplot"),
-                           checkboxInput("RegLine", label = "Draw the Regression Line", value = FALSE)
+                           checkboxInput("RegLine", label = "Draw the Regression Line", value = FALSE),
+                           checkboxInput("RMSLine", label = "Show one RMS error above and below the regression line", value = FALSE)
                   ),
                   tabPanel(title = "X-Variable Histogram",
                            plotOutput("x_hist"),
