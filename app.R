@@ -2,9 +2,9 @@ library(shiny)
 library(ggplot2)
 
 ui <- fluidPage(title = "Estimating from Graphs",
+                actionButton("NewPlot", "Make a New Plot"),
                 navlistPanel(              
                   tabPanel(title = "Scatter Plots",
-                           actionButton("NewPlot", "Make a New Plot"),
                            plotOutput("scattplot"),
                            checkboxInput("RegLine", label = "Draw the Regression Line", value = FALSE),
                            checkboxInput("RMSLine", label = "Show one RMS error above and below the regression line", value = FALSE)
@@ -34,9 +34,8 @@ ui <- fluidPage(title = "Estimating from Graphs",
                                   The histograms links will show you the histograms for each
                                   variable individually."))
                            )
+                
                            )
-
-
 
 
 
@@ -80,17 +79,17 @@ server <- function(input, output) {
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank() )+
       theme(panel.border= element_blank())+
-      theme(axis.line.x = element_line(color="black", size = 1),
-            axis.line.y = element_line(color="black", size = 1))
-    rmsline1 <- geom_abline(slope = mylist$b1, intercept = mylist$b0 + mylist$rms) 
-    rmsline2 <- geom_abline(slope = mylist$b1, intercept = mylist$b0 - mylist$rms)
+      theme(axis.line.x = element_line(color="black", size = 1.5),
+            axis.line.y = element_line(color="black", size = 1.5))
+    rmsline1a <- geom_abline(slope = mylist$b1, intercept = mylist$b0 + mylist$rms, col = "blue")
+    rmsline1b <- geom_abline(slope = mylist$b1, intercept = mylist$b0 - mylist$rms, col = "blue")
     if(input$RegLine == TRUE & input$RMSLine == TRUE) {
-      p + geom_smooth(method = "lm", se = FALSE) + rmsline1 + rmsline2
+      p + geom_smooth(method = "lm", se = FALSE, col = "red") + rmsline1a + rmsline1b
     } else if (input$RegLine == TRUE & input$RMSLine == FALSE) {
-        p + geom_smooth(method = "lm", se = FALSE)
-    } else if (input$Regline == "FALSE" & input$RMSLine == TRUE) {
-        p + rmsline1 + rmsline2
-      } else {p}
+      p + geom_smooth(method = "lm", se = FALSE, col = "red")
+    } else if (input$RegLine == "FALSE" & input$RMSLine == TRUE) {
+      p + rmsline1a + rmsline1b
+    } else {p}
   })
   output$x_hist <- renderPlot({
     dat <- dat<-data.frame(mylist$xlist, mylist$ylist)
@@ -107,8 +106,8 @@ server <- function(input, output) {
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank() )+
       theme(panel.border= element_blank())+
-      theme(axis.line.x = element_line(color="black", size = 1),
-            axis.line.y = element_line(color="black", size = 1))
+      theme(axis.line.x = element_line(color="black", size = 1.5),
+            axis.line.y = element_line(color="black", size = 1.5))
     avline <- geom_vline(xintercept = mean(mylist$xlist), col = "red", size = 2)
     sdline1 <- geom_vline(xintercept = (mean(mylist$xlist) - sd(mylist$xlist)), col = "blue", size = 2)
     sdline2 <- geom_vline(xintercept = (mean(mylist$xlist) + sd(mylist$xlist)), col = "blue", size = 2)
