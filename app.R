@@ -54,10 +54,13 @@ server <- function(input, output) {
     mylist$r1 <- runif(1, -1, 1)
     mylist$b1 <- mylist$r1 * mylist$sy / mylist$sx
     mylist$b0 <- mylist$my - mylist$b1 * mylist$mx
+    for (i in 1:100) {mylist$ylist[i] = mylist$b1*mylist$xlist[i]+mylist$b0+rnorm(1,0,20)}
+    mylist$mx <- mean(mylist$xlist)
+    mylist$sx <- sd(mylist$xlist)
+    mylist$my <- mean(mylist$ylist)
+    mylist$sy <- sd(mylist$ylist)
     mylist$cor <- cor(mylist$xlist, mylist$ylist)
     mylist$rms <- sqrt(1 - (mylist$cor)^2) * mylist$sy
-    for (i in 1:100) {mylist$ylist[i] = mylist$b1*mylist$xlist[i]+mylist$b0+rnorm(1,0,20)}
-    
     
   })
   
@@ -79,7 +82,15 @@ server <- function(input, output) {
       theme(panel.border= element_blank())+
       theme(axis.line.x = element_line(color="black", size = 1),
             axis.line.y = element_line(color="black", size = 1))
-    if(input$RegLine) {p + geom_smooth(method = "lm", se = FALSE)} else {p}   
+    rmsline1 <- geom_abline(slope = mylist$b1, intercept = mylist$b0 + mylist$rms) 
+    rmsline2 <- geom_abline(slope = mylist$b1, intercept = mylist$b0 - mylist$rms)
+    if(input$RegLine == TRUE & input$RMSLine == TRUE) {
+      p + geom_smooth(method = "lm", se = FALSE) + rmsline1 + rmsline2
+    } else if (input$RegLine == TRUE & input$RMSLine == FALSE) {
+        p + geom_smooth(method = "lm", se = FALSE)
+    } else if (input$Regline == "FALSE" & input$RMSLine == TRUE) {
+        p + rmsline1 + rmsline2
+      } else {p}
   })
   output$x_hist <- renderPlot({
     dat <- dat<-data.frame(mylist$xlist, mylist$ylist)
