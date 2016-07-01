@@ -7,7 +7,7 @@ ui <- fluidPage(title = "Estimating from Graphs",
                   tabPanel(title = "Scatter Plots",
                            plotOutput("scattplot"),
                            checkboxInput("RegLine", label = "Draw the Regression Line", value = FALSE),
-                           checkboxInput("RMSLine", label = "Show one RMS error above and below the regression line", value = FALSE)
+                           checkboxInput("RMSLine", label = "Show one and two RMS errors above and below the regression line", value = FALSE)
                   ),
                   tabPanel(title = "X-Variable Histogram",
                            plotOutput("x_hist"),
@@ -81,12 +81,15 @@ server <- function(input, output) {
       theme(panel.border= element_blank())+
       theme(axis.line.x = element_line(color="black", size = 1.5),
             axis.line.y = element_line(color="black", size = 1.5))
+    regline <- geom_abline(slope = mylist$b1, intercept = mylist$b0, col = "red")
     rmsline1a <- geom_abline(slope = mylist$b1, intercept = mylist$b0 + mylist$rms, col = "blue")
     rmsline1b <- geom_abline(slope = mylist$b1, intercept = mylist$b0 - mylist$rms, col = "blue")
+    rmsline2a <- geom_abline(slope = mylist$b1, intercept = mylist$b0 +2* mylist$rms, col = "blue")
+    rmsline2b <- geom_abline(slope = mylist$b1, intercept = mylist$b0 - 2*mylist$rms, col = "blue")
     if(input$RegLine == TRUE & input$RMSLine == TRUE) {
-      p + geom_smooth(method = "lm", se = FALSE, col = "red") + rmsline1a + rmsline1b
+      p + regline + rmsline1a + rmsline1b + rmsline2a + rmsline2b
     } else if (input$RegLine == TRUE & input$RMSLine == FALSE) {
-      p + geom_smooth(method = "lm", se = FALSE, col = "red")
+      p + regline
     } else if (input$RegLine == "FALSE" & input$RMSLine == TRUE) {
       p + rmsline1a + rmsline1b
     } else {p}
