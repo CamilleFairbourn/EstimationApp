@@ -1,6 +1,19 @@
 library(shiny)
 library(ggplot2)
 
+plaintheme <- theme_bw() + 
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() ) +
+  theme(panel.border = element_blank()) +
+  theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
+
+axistheme <- theme(plot.title = element_text(color = "black", face = "bold", size=28)) +
+  theme(axis.title = element_text(color = "black", size = 20)) +
+  theme(axis.text.x = element_text(size = 16)) +
+  theme(axis.text.y = element_text(size = 16))
+
 ui <- fluidPage(title = "Estimating from Graphs",
                 actionButton("NewPlot", "Make a New Plot"),
                 navlistPanel(              
@@ -12,12 +25,14 @@ ui <- fluidPage(title = "Estimating from Graphs",
                   tabPanel(title = "X-Variable Histogram",
                            plotOutput("x_hist"),
                            checkboxInput("Xave", label = "Show the average", value = FALSE),
-                           checkboxInput("Xsd", label = "Show one SD above and below the average", value = FALSE)
+                           checkboxInput("Xsd", label = "Show one SD above and below the average", value = FALSE),
+                           checkboxInput("Xsd2", label = "Show two SDs above and below the average", value = FALSE)
                   ),
                   tabPanel(title = "Y-Variable Histogram",
                            plotOutput("y_hist"),
                            checkboxInput("Yave", label = "Show the average", value = FALSE),
-                           checkboxInput("Ysd", label = "Show one SD above and below the average", value = FALSE)
+                           checkboxInput("Ysd", label = "Show one SD above and below the average", value = FALSE),
+                           checkboxInput("Ysd2", label = "Show two SDs above and below the average", value = FALSE)
                   ),
                   tabPanel(title = "Statistics",
                            textOutput("xmean"),
@@ -74,13 +89,8 @@ server <- function(input, output) {
       scale_y_continuous("Y-variable", 
                          breaks = round(seq(min(mylist$ylist), max(mylist$ylist), 
                                             (max(mylist$ylist)-min(mylist$ylist))/10)), 0) +
-      theme_bw() + 
-      theme(plot.background = element_blank(),
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank() )+
-      theme(panel.border= element_blank())+
-      theme(axis.line.x = element_line(color="black", size = 1.5),
-            axis.line.y = element_line(color="black", size = 1.5))
+      plaintheme +
+      axistheme
     regline <- geom_abline(slope = mylist$b1, intercept = mylist$b0, col = "red")
     rmsline1a <- geom_abline(slope = mylist$b1, intercept = mylist$b0 + mylist$rms, col = "blue")
     rmsline1b <- geom_abline(slope = mylist$b1, intercept = mylist$b0 - mylist$rms, col = "blue")
@@ -91,11 +101,11 @@ server <- function(input, output) {
     } else if (input$RegLine == TRUE & input$RMSLine == FALSE) {
       p + regline
     } else if (input$RegLine == "FALSE" & input$RMSLine == TRUE) {
-      p + rmsline1a + rmsline1b
+      p + rmsline1a + rmsline1b + rmsline2a + rmsline2b
     } else {p}
   })
   output$x_hist <- renderPlot({
-    dat <- dat<-data.frame(mylist$xlist, mylist$ylist)
+    dat <- data.frame(mylist$xlist, mylist$ylist)
     p2<- ggplot(dat, aes(x = mylist.xlist)) +
       geom_histogram(aes(y = ..density..), fill = "gray81", col = "black",
                      binwidth = (max(mylist$xlist)-min(mylist$xlist))/10) +
@@ -104,31 +114,41 @@ server <- function(input, output) {
                          breaks = round(seq(min(mylist$xlist), max(mylist$xlist), 
                                             (max(mylist$xlist)-min(mylist$xlist))/10)), 0) +
       scale_y_continuous("Proportion per X") +
-      theme_bw() + 
-      theme(plot.background = element_blank(),
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank() )+
-      theme(panel.border= element_blank())+
-      theme(axis.line.x = element_line(color="black", size = 1.5),
-            axis.line.y = element_line(color="black", size = 1.5))
+      plaintheme +
+      axistheme
+    
     avline <- geom_vline(xintercept = mean(mylist$xlist), col = "red", size = 2)
     sdline1 <- geom_vline(xintercept = (mean(mylist$xlist) - sd(mylist$xlist)), col = "blue", size = 2)
     sdline2 <- geom_vline(xintercept = (mean(mylist$xlist) + sd(mylist$xlist)), col = "blue", size = 2)
-    p3 <- p2 + avline
+    sdline3 <- geom_vline(xintercept = (mean(mylist$xlist) + 2*sd(mylist$xlist)), col = "seagreen", size = 2)
+    sdline4 <- geom_vline(xintercept = (mean(mylist$xlist) - 2*sd(mylist$xlist)), col = "seagreen", size = 2)
+    p3 <- p2 + avline +sdline1 + sdline2 + sdline3 + sdline4
     p4 <- p2 + avline + sdline1 + sdline2
-    p5 <- p2 + sdline1 + sdline2
-    if(input$Xave == TRUE & input$Xsd == FALSE) {
+    p5 <- p2 + avline + sdline3 + sdline4
+    p6 <- p2 + avline
+    p7 <- p2 + sdline1 + sdline2 + sdline3 + sdline4
+    p8 <- p2 + sdline1 + sdline2
+    p9 <- p2 + sdline3 + sdline4
+    if(input$Xave == TRUE & input$Xsd == TRUE & input$Xsd2 == TRUE) {
       p3
-    } else if (input$Xave == TRUE & input$Xsd == TRUE) {
+    } else if (input$Xave == TRUE & input$Xsd == TRUE & input$Xsd2 == FALSE) {
       p4
-    } else if (input$Xave == FALSE & input$Xsd == TRUE) {
+    } else if (input$Xave == TRUE & input$Xsd == FALSE & input$Xsd2 == TRUE) {
       p5
+    } else if (input$Xave == TRUE & input$Xsd == FALSE & input$Xsd2 == FALSE) {
+      p6
+    } else if (input$Xave == FALSE & input$Xsd == TRUE & input$Xsd2 == TRUE) {
+      p7
+    } else if (input$Xave == FALSE & input$Xsd == TRUE & input$Xsd2 == FALSE) {
+      p8
+    } else if (input$Xave == FALSE & input$Xsd == FALSE & input$Xsd2 == TRUE) {
+      p9
     } else {
       p2
     }
   })
   output$y_hist <- renderPlot({
-    dat <- dat<-data.frame(mylist$xlist, mylist$ylist)
+    dat <- data.frame(mylist$xlist, mylist$ylist)
     p2<- ggplot(dat, aes(x = mylist.ylist)) +
       geom_histogram(aes(y = ..density..), fill = "gray81", col = "black",
                      binwidth = (max(mylist$ylist)-min(mylist$ylist))/10) +
@@ -137,25 +157,35 @@ server <- function(input, output) {
                          breaks = round(seq(min(mylist$ylist), max(mylist$ylist), 
                                             (max(mylist$ylist)-min(mylist$ylist))/10)), 0) +
       scale_y_continuous("Proportion per Y") +
-      theme_bw() + 
-      theme(plot.background = element_blank(),
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank() )+
-      theme(panel.border= element_blank())+
-      theme(axis.line.x = element_line(color="black", size = 1),
-            axis.line.y = element_line(color="black", size = 1))
+      plaintheme +
+      axistheme
+    
     avline <- geom_vline(xintercept = mean(mylist$ylist), col = "red", size = 2)
     sdline1 <- geom_vline(xintercept = (mean(mylist$ylist) - sd(mylist$ylist)), col = "blue", size = 2)
     sdline2 <- geom_vline(xintercept = (mean(mylist$ylist) + sd(mylist$ylist)), col = "blue", size = 2)
-    p3 <- p2 + avline
+    sdline3 <- geom_vline(xintercept = (mean(mylist$ylist) + 2*sd(mylist$ylist)), col = "seagreen", size = 2)
+    sdline4 <- geom_vline(xintercept = (mean(mylist$ylist) - 2*sd(mylist$ylist)), col = "seagreen", size = 2)
+    p3 <- p2 + avline +sdline1 + sdline2 + sdline3 + sdline4
     p4 <- p2 + avline + sdline1 + sdline2
-    p5 <- p2 + sdline1 + sdline2
-    if(input$Yave == TRUE & input$Ysd == FALSE) {
+    p5 <- p2 + avline + sdline3 + sdline4
+    p6 <- p2 + avline
+    p7 <- p2 + sdline1 + sdline2 + sdline3 + sdline4
+    p8 <- p2 + sdline1 + sdline2
+    p9 <- p2 + sdline3 + sdline4
+    if(input$Yave == TRUE & input$Ysd == TRUE & input$Ysd2 == TRUE) {
       p3
-    } else if (input$Yave == TRUE & input$Ysd == TRUE) {
+    } else if (input$Yave == TRUE & input$Ysd == TRUE & input$Ysd2 == FALSE) {
       p4
-    } else if (input$Yave == FALSE & input$Ysd == TRUE) {
+    } else if (input$Yave == TRUE & input$Ysd == FALSE & input$Ysd2 == TRUE) {
       p5
+    } else if (input$Yave == TRUE & input$Ysd == FALSE & input$Ysd2 == FALSE) {
+      p6
+    } else if (input$Yave == FALSE & input$Ysd == TRUE & input$Ysd2 == TRUE) {
+      p7
+    } else if (input$Yave == FALSE & input$Ysd == TRUE & input$Ysd2 == FALSE) {
+      p8
+    } else if (input$Yave == FALSE & input$Ysd == FALSE & input$Ysd2 == TRUE) {
+      p9
     } else {
       p2
     }
